@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { nanoid } from 'nanoid';
+// import { nanoid } from 'nanoid';
 
 import css from './ContactForm.module.css';
 
-import { addContact } from 'redux/contactsSlice';
+import { postContactsAction } from 'redux/operations';
 
 export const ContactForm = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
-  const { contacts } = useSelector(state => state.contacts);
+  const { contacts, items } = useSelector(state => state.contacts);
   const dispatch = useDispatch();
+  console.log(items);
+  console.log(contacts);
 
   const handleChange = event => {
     const { name, value } = event.target;
@@ -28,13 +30,13 @@ export const ContactForm = () => {
   };
 
   const handleAddContact = contact => {
-    if (contacts.find(cont => cont.name === contact.name)) {
+    if (items.find(cont => cont.name === contact.name)) {
       return alert(`${contact.name} is already in contacts.`);
     }
 
-    contact['id'] = nanoid();
+    // contact['id'] = nanoid();
 
-    dispatch(addContact(contact));
+    dispatch(postContactsAction(contact));
   };
 
   const handleSubmit = event => {
@@ -45,7 +47,7 @@ export const ContactForm = () => {
       number,
     };
 
-    handleAddContact(contact);
+    dispatch(handleAddContact(contact));
 
     reset();
   };
@@ -85,6 +87,13 @@ export const ContactForm = () => {
       <button type="submit" className={css.button}>
         Add contact
       </button>
+      {/* <button
+        type="button"
+        className={css.button}
+        onClick={() => dispatch(getContactsAction())}
+      >
+        Get contact
+      </button> */}
     </form>
   );
 };

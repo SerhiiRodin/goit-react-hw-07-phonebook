@@ -1,14 +1,15 @@
 import { VscCircleSmallFilled } from 'react-icons/vsc';
 import css from './ContactList.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteContact } from 'redux/contactsSlice';
+import { deleteContactsAction } from 'redux/operations';
 
 export function ContactList() {
-  const { contacts, filter } = useSelector(state => state.contacts);
+  const { filter, items } = useSelector(state => state.contacts);
+
   const dispatch = useDispatch();
 
   const filterByName = () => {
-    const arr = contacts.filter(el =>
+    const arr = items.filter(el =>
       el.name.toLowerCase().includes(filter.trim().toLowerCase())
     );
     return arr;
@@ -17,11 +18,11 @@ export function ContactList() {
   let currentContacts = [];
 
   if (filter === '') {
-    currentContacts = contacts;
+    currentContacts = items;
   } else currentContacts = filterByName();
 
   const handleDeleteContact = contactId => {
-    dispatch(deleteContact(contactId));
+    dispatch(deleteContactsAction(contactId));
   };
 
   return (

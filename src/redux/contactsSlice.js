@@ -1,73 +1,131 @@
-import { createSlice } from '@reduxjs/toolkit';
-import persistReducer from 'redux-persist/es/persistReducer';
+import { createSlice, isAnyOf } from '@reduxjs/toolkit';
+import {
+  deleteContactsAction,
+  getContactsAction,
+  postContactsAction,
+} from './operations';
 
-import storage from 'redux-persist/lib/storage';
+const arrActions = [
+  deleteContactsAction,
+  getContactsAction,
+  postContactsAction,
+];
+
+const getActionWithType = type => {
+  return arrActions.map(el => el[type]);
+};
+
+const handlePending = (state, action) => {
+  state.isLoading = true;
+};
+
+const handleFulfilledGet = (state, action) => {
+  state.isLoading = false;
+  state.items = action.payload;
+  state.error = null;
+};
+
+const handleFulfilledPost = (state, action) => {
+  state.isLoading = false;
+  state.items.push(action.payload);
+  state.error = null;
+};
+
+const handleFulfilledDelete = (state, action) => {
+  state.isLoading = false;
+  state.items = state.items.filter(contact => contact.id !== action.payload.id);
+  state.error = null;
+};
+
+const handleRejected = (state, action) => {
+  state.isLoading = false;
+  state.error = 'action.payload';
+};
 
 const initialState = {
-  contacts: [
-    { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-    { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-    { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-    { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-  ],
   filter: '',
+  items: [],
+  isLoading: false,
+  error: null,
 };
 
 const contactsSlice = createSlice({
   name: 'contacts',
   initialState: initialState,
   reducers: {
-    addContact: (state, action) => {
-      state.contacts.push(action.payload);
-    },
-    deleteContact: (state, action) => {
-      state.contacts = state.contacts.filter(
-        contact => contact.id !== action.payload
-      );
-    },
     setStatusFilter: (state, action) => {
       state.filter = action.payload;
     },
+
+    ////Когда не было createAsyncThunk мы создавали Экшены,
+    // когда он появился, то он сам создает экшены и мы их обр. с помощью extraReducers
+    // fetching: (state, action) => {
+    //   state.isLoading = true;
+    // },
+    // fetchSuccess: (state, action) => {
+    //   state.isLoading = false;
+    //   state.items = action.payload;
+    //   state.error = null;
+    // },
+    // fetchError: (state, action) => {
+    //   state.isLoading = false;
+    //   state.error = action.payload;
+    // },
+  },
+
+  // extraReducers: {
+  //   [getContactsAction.pending]: (state, action) => {
+  //     state.isLoading = true;
+  //   },
+  //   [getContactsAction.fulfilled]: (state, action) => {
+  //     state.isLoading = false;
+  //     state.items = action.payload;
+  //     state.error = null;
+  //   },
+  //   [getContactsAction.rejected]: (state, action) => {
+  //     state.isLoading = false;
+  //     state.error = action.payload;
+  //   },
+  // },
+
+  // Переписуем extraReducers передавая в него не {}, а ()=>
+  extraReducers: builder => {
+    builder
+      // .addCase(getContactsAction.pending, handlePending)
+      .addCase(getContactsAction.fulfilled, handleFulfilledGet)
+      // .addCase(getContactsAction.rejected, handleRejected)
+
+      // .addCase(postContactsAction.pending, handlePending)
+      .addCase(postContactsAction.fulfilled, handleFulfilledPost)
+      // .addCase(postContactsAction.rejected, handleRejected)
+
+      // .addCase(deleteContactsAction.pending, handlePending)
+      .addCase(deleteContactsAction.fulfilled, handleFulfilledDelete)
+      // .addCase(deleteContactsAction.rejected, handleRejected)
+      // Избавляемся от дубляжа кода
+      .addMatcher(
+        isAnyOf(
+          // getContactsAction.pending,
+          // postContactsAction.pending,
+          // deleteContactsAction.pending
+          // Избавляемся от дубляжа кода массив распыливаем, чтоб были эл
+          ...getActionWithType('pending')
+        ),
+        handlePending
+      )
+      .addMatcher(
+        isAnyOf(
+          // getContactsAction.rejected,
+          // postContactsAction.rejected,
+          // deleteContactsAction.rejected
+          ...getActionWithType('rejected')
+        ),
+        handleRejected
+      );
   },
 });
 
 export const { addContact, deleteContact, setStatusFilter } =
   contactsSlice.actions;
 
-const contactsReducer = contactsSlice.reducer;
-
-// Для сохранения в локалСтор.
-const persistConfig = {
-  key: 'items',
-  storage,
-  // Сохраняем в стор только contacts, filter нет
-  whitelist: ['contacts'],
-};
-
-export const persistedContactsReducer = persistReducer(
-  persistConfig,
-  contactsReducer
-);
-
-////Без Slice когда нет Immer использование мутабельных операций
-// export const addContact = createAction('contacts/addContact');
-// export const deleteContact = createAction('contacts/deleteContact');
-// export const setStatusFilter = createAction('contacts/setStatusFilter');
-
-// const myReduser = createReducer(initialStat, {
-//   [addContact]: (state, action) => {
-//     return { ...state, contacts: [...state.contacts, action.payload] };
-//   },
-//   [deleteContact]: (state, action) => {
-//     return {
-//       ...state,
-//       contacts: state.contacts.filter(contact => contact.id !== action.payload),
-//     };
-//   },
-//   [setStatusFilter]: (state, action) => {
-//     return {
-//       ...state,
-//       filter: action.payload,
-//     };
-//   },
-// });
+export const contactsReducer = contactsSlice.reducer;
