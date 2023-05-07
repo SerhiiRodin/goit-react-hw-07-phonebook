@@ -6,6 +6,7 @@ import { Filter } from './Filter/Filter';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getContactsAction } from 'redux/operations';
+import { ToastContainer } from 'react-toastify';
 
 export const App = () => {
   const dispatch = useDispatch();
@@ -29,6 +30,7 @@ export const App = () => {
           <ContactList />
         </>
       )}
+      <ToastContainer />
     </div>
   );
 };
